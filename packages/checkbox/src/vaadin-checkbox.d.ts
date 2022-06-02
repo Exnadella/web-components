@@ -3,13 +3,10 @@
  * Copyright (c) 2017 - 2022 Vaadin Ltd.
  * This program is available under Apache License Version 2.0, available at https://vaadin.com/license/
  */
-import { ActiveMixin } from '@vaadin/component-base/src/active-mixin.js';
 import { ControllerMixin } from '@vaadin/component-base/src/controller-mixin.js';
 import { ElementMixin } from '@vaadin/component-base/src/element-mixin.js';
-import { CheckedMixin } from '@vaadin/field-base/src/checked-mixin.js';
-import { DelegateFocusMixin } from '@vaadin/field-base/src/delegate-focus-mixin.js';
-import { LabelMixin } from '@vaadin/field-base/src/label-mixin.js';
 import { ThemableMixin } from '@vaadin/vaadin-themable-mixin/vaadin-themable-mixin.js';
+import { CheckboxMixin } from './vaadin-checkbox-mixin.js';
 
 /**
  * Fired when the `checked` property changes.
@@ -61,23 +58,7 @@ export interface CheckboxEventMap extends HTMLElementEventMap, CheckboxCustomEve
  * @fires {CustomEvent} checked-changed - Fired when the `checked` property changes.
  * @fires {CustomEvent} indeterminate-changed - Fired when the `indeterminate` property changes.
  */
-declare class Checkbox extends LabelMixin(
-  CheckedMixin(DelegateFocusMixin(ActiveMixin(ElementMixin(ThemableMixin(ControllerMixin(HTMLElement)))))),
-) {
-  /**
-   * True if the checkbox is in the indeterminate state which means
-   * it is not possible to say whether it is checked or unchecked.
-   * The state is reset once the user switches the checkbox by hand.
-   *
-   * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/checkbox#Indeterminate_state_checkboxes
-   */
-  indeterminate: boolean;
-
-  /**
-   * The name of the checkbox.
-   */
-  name: string;
-
+declare class Checkbox extends CheckboxMixin(ElementMixin(ThemableMixin(ControllerMixin(HTMLElement)))) {
   addEventListener<K extends keyof CheckboxEventMap>(
     type: K,
     listener: (this: Checkbox, ev: CheckboxEventMap[K]) => void,
