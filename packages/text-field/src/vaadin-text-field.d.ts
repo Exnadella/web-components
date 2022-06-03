@@ -4,9 +4,8 @@
  * This program is available under Apache License Version 2.0, available at https://vaadin.com/license/
  */
 import { ElementMixin } from '@vaadin/component-base/src/element-mixin.js';
-import { InputFieldMixin } from '@vaadin/field-base/src/input-field-mixin.js';
-import { PatternMixin } from '@vaadin/field-base/src/pattern-mixin.js';
 import { ThemableMixin } from '@vaadin/vaadin-themable-mixin/vaadin-themable-mixin.js';
+import { TextFieldMixin } from './vaadin-text-field-mixin.js';
 
 /**
  * Fired when the user commits a value change.
@@ -97,17 +96,7 @@ export interface TextFieldEventMap extends HTMLElementEventMap, TextFieldCustomE
  * @fires {CustomEvent} invalid-changed - Fired when the `invalid` property changes.
  * @fires {CustomEvent} value-changed - Fired when the `value` property changes.
  */
-declare class TextField extends PatternMixin(InputFieldMixin(ThemableMixin(ElementMixin(HTMLElement)))) {
-  /**
-   * Maximum number of characters (in Unicode code points) that the user can enter.
-   */
-  maxlength: number | null | undefined;
-
-  /**
-   * Minimum number of characters (in Unicode code points) that the user can enter.
-   */
-  minlength: number | null | undefined;
-
+declare class TextField extends TextFieldMixin(ThemableMixin(ElementMixin(HTMLElement))) {
   addEventListener<K extends keyof TextFieldEventMap>(
     type: K,
     listener: (this: TextField, ev: TextFieldEventMap[K]) => void,

@@ -21,6 +21,8 @@
   "type": "module",
   "files": [
     "src",
+    "!src/vaadin-lit-text-field.d.ts",
+    "!src/vaadin-lit-text-field.js",
     "theme",
     "vaadin-*.d.ts",
     "vaadin-*.js"
@@ -32,6 +34,7 @@
     "web-component"
   ],
   "dependencies": {
+    "@open-wc/dedupe-mixin": "^1.3.0",
     "@polymer/polymer": "^3.0.0",
     "@vaadin/component-base": "23.1.0-rc3",
     "@vaadin/field-base": "23.1.0-rc3",

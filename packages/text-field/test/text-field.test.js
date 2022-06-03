@@ -1,20 +1,24 @@
 import { expect } from '@esm-bundle/chai';
-import { aTimeout, fixtureSync, nextFrame } from '@vaadin/testing-helpers';
+import { aTimeout, fixtureSync, nextFrame, nextRender } from '@vaadin/testing-helpers';
 import sinon from 'sinon';
 import '../src/vaadin-text-field.js';
+import { TextField } from '../src/vaadin-lit-text-field.js';
 
-describe('text-field', () => {
+const runTests = (tag) => {
   let textField, input;
 
-  beforeEach(() => {
-    textField = fixtureSync('<vaadin-text-field></vaadin-text-field>');
+  beforeEach(async () => {
+    textField = fixtureSync(`<${tag}></${tag}>`);
+    await nextRender();
     input = textField.inputElement;
   });
 
   describe('properties', () => {
     describe('native', () => {
-      function assertAttrCanBeSet(prop, value) {
+      async function assertAttrCanBeSet(prop, value) {
         textField[prop] = value;
+        await nextFrame();
+
         const attrValue = input.getAttribute(prop);
 
         if (value === true) {
@@ -26,49 +30,48 @@ describe('text-field', () => {
         }
       }
 
-      function assertPropCanBeSet(prop, value) {
-        for (let i = 0; i < 3; i++) {
-          // Check different values (i.e. true false true for boolean or string1 string2 string3)
-          const newValue = typeof value === 'boolean' ? i % 2 === 0 : value + i;
-          textField[prop] = newValue;
-          expect(input[prop]).to.be.equal(newValue);
-        }
-      }
-
       ['pattern', 'placeholder', 'value', 'title'].forEach((prop) => {
-        it(`should set string property ${prop}`, () => {
-          assertPropCanBeSet(prop, 'foo');
+        it(`should set string property ${prop}`, async () => {
+          textField[prop] = 'foo';
+          await nextFrame();
+          expect(input[prop]).to.be.equal('foo');
         });
       });
 
       ['disabled'].forEach((prop) => {
-        it(`should set boolean property ${prop}`, () => {
-          assertPropCanBeSet(prop, true);
+        it(`should set boolean property ${prop}`, async () => {
+          textField[prop] = true;
+          await nextFrame();
+          expect(input[prop]).to.be.true;
+
+          textField[prop] = false;
+          await nextFrame();
+          expect(input[prop]).to.be.false;
         });
       });
 
       ['maxlength', 'minlength'].forEach((prop) => {
-        it(`should set numeric attribute ${prop}`, () => {
-          assertAttrCanBeSet(prop, 2);
+        it(`should set numeric attribute ${prop}`, async () => {
+          await assertAttrCanBeSet(prop, 2);
         });
       });
 
       ['autocomplete'].forEach((prop) => {
-        it(`should set boolean attribute ${prop}`, () => {
-          assertAttrCanBeSet(prop, 'on');
+        it(`should set boolean attribute ${prop}`, async () => {
+          await assertAttrCanBeSet(prop, 'on');
         });
       });
 
       ['autocapitalize'].forEach((prop) => {
-        it(`should set boolean attribute ${prop}`, () => {
-          assertAttrCanBeSet(prop, 'none');
+        it(`should set boolean attribute ${prop}`, async () => {
+          await assertAttrCanBeSet(prop, 'none');
         });
       });
 
       ['autocomplete', 'autocorrect', 'readonly', 'required'].forEach((prop) => {
-        it(`should set boolean attribute ${prop}`, () => {
-          assertAttrCanBeSet(prop, true);
-          assertAttrCanBeSet(prop, false);
+        it(`should set boolean attribute ${prop}`, async () => {
+          await assertAttrCanBeSet(prop, true);
+          await assertAttrCanBeSet(prop, false);
         });
       });
     });
@@ -78,16 +81,18 @@ describe('text-field', () => {
         expect(textField.clearButtonVisible).to.be.false;
       });
 
-      it('should clear the value when clear button is clicked', () => {
+      it('should clear the value when clear button is clicked', async () => {
         textField.clearButtonVisible = true;
         textField.value = 'Foo';
+        await nextFrame();
         textField.$.clearButton.click();
         expect(textField.value).not.to.be.ok;
       });
 
-      it('should clear the native input value when clear button is clicked', () => {
+      it('should clear the native input value when clear button is clicked', async () => {
         textField.clearButtonVisible = true;
         textField.value = 'Foo';
+        await nextFrame();
         textField.$.clearButton.click();
         expect(input.value).to.equal('');
       });
@@ -128,65 +133,80 @@ describe('text-field', () => {
         expect(textField.value).to.be.equal('foo');
       });
 
-      it('setting input value updates has-value attribute', () => {
+      it('setting input value updates has-value attribute', async () => {
         textField.value = 'foo';
+        await nextFrame();
         expect(textField.hasAttribute('has-value')).to.be.true;
       });
 
-      it('setting value to undefined should not update has-value attribute', () => {
+      it('setting value to undefined should not update has-value attribute', async () => {
         textField.value = undefined;
+        await nextFrame();
         expect(textField.hasAttribute('has-value')).to.be.false;
       });
 
-      it('setting value to undefined should clear the native input value', () => {
+      it('setting value to undefined should clear the native input value', async () => {
         textField.value = 'foo';
+        await nextFrame();
+
         textField.value = undefined;
+        await nextFrame();
+
         expect(input.value).to.equal('');
       });
 
-      it('setting empty value does not update has-value attribute', () => {
+      it('setting empty value does not update has-value attribute', async () => {
         textField.value = '';
+        await nextFrame();
         expect(textField.hasAttribute('has-value')).to.be.false;
       });
 
       // User could accidentally set a 0 or false value
-      it('setting number value updates has-value attribute', () => {
+      it('setting number value updates has-value attribute', async () => {
         textField.value = 0;
+        await nextFrame();
         expect(textField.hasAttribute('has-value')).to.be.true;
       });
 
-      it('setting boolean value updates has-value attribute', () => {
+      it('setting boolean value updates has-value attribute', async () => {
         textField.value = false;
+        await nextFrame();
         expect(textField.hasAttribute('has-value')).to.be.true;
       });
 
-      it('setting label updates has-label attribute', () => {
+      it('setting label updates has-label attribute', async () => {
         textField.label = 'foo';
+        await nextFrame();
         expect(textField.hasAttribute('has-label')).to.be.true;
       });
 
-      it('setting label to empty string does not update has-label attribute', () => {
+      it('setting label to empty string does not update has-label attribute', async () => {
         textField.label = '';
+        await nextFrame();
         expect(textField.hasAttribute('has-label')).to.be.false;
       });
 
-      it('setting label to null does not update has-label attribute', () => {
+      it('setting label to null does not update has-label attribute', async () => {
         textField.label = null;
+        await nextFrame();
         expect(textField.hasAttribute('has-label')).to.be.false;
       });
 
-      it('setting helper updates has-helper attribute', () => {
+      it('setting helper updates has-helper attribute', async () => {
         textField.helperText = 'foo';
+        await nextFrame();
         expect(textField.hasAttribute('has-helper')).to.be.true;
       });
 
-      it('setting helper to empty string does not update has-helper attribute', () => {
+      it('setting helper to empty string does not update has-helper attribute', async () => {
         textField.helperText = '';
+        await nextFrame();
         expect(textField.hasAttribute('has-helper')).to.be.false;
       });
 
-      it('setting helper to null does not update has-helper attribute', () => {
+      it('setting helper to null does not update has-helper attribute', async () => {
         textField.helperText = null;
+        await nextFrame();
         expect(textField.hasAttribute('has-helper')).to.be.false;
       });
 
@@ -199,28 +219,32 @@ describe('text-field', () => {
         expect(textField.hasAttribute('has-helper')).to.be.true;
       });
 
-      it('setting errorMessage updates has-error-message attribute', () => {
+      it('setting errorMessage updates has-error-message attribute', async () => {
         textField.invalid = true;
         textField.errorMessage = 'foo';
+        await nextFrame();
         expect(textField.hasAttribute('has-error-message')).to.be.true;
       });
 
-      it('setting errorMessage to empty string does not update has-error-message attribute', () => {
+      it('setting errorMessage to empty string does not update has-error-message attribute', async () => {
         textField.invalid = true;
         textField.errorMessage = '';
+        await nextFrame();
         expect(textField.hasAttribute('has-error-message')).to.be.false;
       });
 
-      it('setting errorMessage to null does not update has-error-message attribute', () => {
+      it('setting errorMessage to null does not update has-error-message attribute', async () => {
         textField.invalid = true;
         textField.errorMessage = null;
+        await nextFrame();
         expect(textField.hasAttribute('has-error-message')).to.be.false;
       });
     });
 
     describe('required', () => {
-      beforeEach(() => {
+      beforeEach(async () => {
         textField.required = true;
+        await nextFrame();
       });
 
       it('should focus on required indicator click', () => {
@@ -236,6 +260,7 @@ describe('text-field', () => {
 
       it('should not select content on focus when autoselect is false', async () => {
         textField.value = '123';
+        await nextFrame();
         input.dispatchEvent(new CustomEvent('focus', { bubbles: false }));
         await aTimeout(1);
         expect(input.selectionEnd - input.selectionStart).to.equal(0);
@@ -244,6 +269,7 @@ describe('text-field', () => {
       it('should select content on focus when autoselect is true', async () => {
         textField.value = '123';
         textField.autoselect = true;
+        await nextFrame();
         input.dispatchEvent(new CustomEvent('focus', { bubbles: false }));
         await aTimeout(1);
         expect(input.selectionEnd - input.selectionStart).to.equal(3);
@@ -251,36 +277,48 @@ describe('text-field', () => {
     });
 
     describe('validation constraints', () => {
-      it('should not validate the field when minlength is set', () => {
+      it('should not validate the field when minlength is set', async () => {
         textField.minlength = 2;
+        await nextFrame();
         expect(textField.invalid).to.be.false;
       });
 
-      it('should not validate the field when maxlength is set', () => {
+      it('should not validate the field when maxlength is set', async () => {
         textField.maxlength = 6;
+        await nextFrame();
         expect(textField.invalid).to.be.false;
       });
 
-      it('should validate the field when invalid after minlength is changed', () => {
+      it('should validate the field when invalid after minlength is changed', async () => {
         textField.invalid = true;
+        await nextFrame();
+
         const spy = sinon.spy(textField, 'validate');
         textField.minlength = 2;
+        await nextFrame();
+
         expect(spy.calledOnce).to.be.true;
       });
 
-      it('should validate the field when invalid after maxlength is changed', () => {
+      it('should validate the field when invalid after maxlength is changed', async () => {
         textField.invalid = true;
+        await nextFrame();
+
         const spy = sinon.spy(textField, 'validate');
         textField.maxlength = 6;
+        await nextFrame();
+
         expect(spy.calledOnce).to.be.true;
       });
 
-      it('should update "invalid" state when "required" is removed', () => {
+      it('should update "invalid" state when "required" is removed', async () => {
         textField.required = true;
+        await nextFrame();
         textField.validate();
         expect(textField.invalid).to.be.true;
 
         textField.required = false;
+        await nextFrame();
         expect(textField.invalid).to.be.false;
       });
 
@@ -326,30 +364,34 @@ describe('text-field', () => {
         expect(textField.invalid).to.be.false;
       });
 
-      it('should update "invalid" state when "pattern" is removed', () => {
+      it('should update "invalid" state when "pattern" is removed', async () => {
         textField.value = '123foo';
         textField.pattern = '\\d+';
+        await nextFrame();
         textField.validate();
         expect(textField.invalid).to.be.true;
 
         textField.pattern = '';
+        await nextFrame();
         expect(textField.invalid).to.be.false;
       });
 
-      it('should update "invalid" state when a constraint is removed even while other constraints are still active', () => {
+      it('should update "invalid" state when a constraint is removed even while other constraints are still active', async () => {
         textField.required = true;
         textField.pattern = '\\d*';
+        await nextFrame();
         textField.validate();
         expect(textField.invalid).to.be.true;
 
         textField.required = false;
+        await nextFrame();
         expect(textField.invalid).to.be.false;
       });
     });
   });
 
   describe('value property', () => {
-    it('should not consider updating the value as user input if the value is not changed', () => {
+    it('should not consider updating the value as user input if the value is not changed', async () => {
       const event = new Event('input', {
         bubbles: true,
         cancelable: true,
@@ -357,6 +399,7 @@ describe('text-field', () => {
       input.dispatchEvent(event);
 
       textField.value = 'foo';
+      await nextFrame();
       expect(input.value).to.equal('foo');
     });
   });
@@ -375,24 +418,46 @@ describe('text-field', () => {
   });
 
   describe(`methods`, () => {
-    it('should clear the value when clear() is called', () => {
+    it('should clear the value when clear() is called', async () => {
       textField.value = 'Foo';
+      await nextFrame();
       textField.clear();
       expect(textField.value).not.to.be.ok;
     });
 
-    it('should clear the value of native input when clear() is called', () => {
+    it('should clear the value of native input when clear() is called', async () => {
       textField.value = 'Foo';
+      await nextFrame();
       textField.clear();
       expect(input.value).to.equal('');
     });
   });
 
   describe('theme attribute', () => {
-    it('should propagate theme attribute to input container', () => {
+    it('should propagate theme attribute to input container', async () => {
       const container = textField.shadowRoot.querySelector('[part="input-field"]');
       textField.setAttribute('theme', 'align-center');
+      await nextFrame();
       expect(container.getAttribute('theme')).to.equal('align-center');
     });
   });
+};
+
+describe('TextField + Polymer', () => {
+  runTests('vaadin-text-field');
+});
+
+describe('TextField + Lit', () => {
+  const LIT_TAG = 'vaadin-lit-text-field';
+
+  customElements.define(
+    LIT_TAG,
+    class extends TextField {
+      static get is() {
+        return LIT_TAG;
+      }
+    },
+  );
+
+  runTests(LIT_TAG);
 });
