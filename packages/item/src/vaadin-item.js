@@ -3,6 +3,7 @@
  * Copyright (c) 2017 - 2022 Vaadin Ltd.
  * This program is available under Apache License Version 2.0, available at https://vaadin.com/license/
  */
+import { htmlLiteral } from '@polymer/polymer/lib/utils/html-tag.js';
 import { html, PolymerElement } from '@polymer/polymer/polymer-element.js';
 import { DirMixin } from '@vaadin/component-base/src/dir-mixin.js';
 import { ThemableMixin } from '@vaadin/vaadin-themable-mixin/vaadin-themable-mixin.js';
@@ -55,13 +56,7 @@ class Item extends ItemMixin(ThemableMixin(DirMixin(PolymerElement))) {
   static get template() {
     return html`
       <style>
-        :host {
-          display: inline-block;
-        }
-
-        :host([hidden]) {
-          display: none !important;
-        }
+        ${htmlLiteral([this.styles.cssText])}
       </style>
       <span part="checkmark" aria-hidden="true"></span>
       <div part="content">

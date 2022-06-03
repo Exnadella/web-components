@@ -5,6 +5,7 @@
  */
 import { ActiveMixin } from '@vaadin/component-base/src/active-mixin.js';
 import { FocusMixin } from '@vaadin/component-base/src/focus-mixin.js';
+import { css } from '@vaadin/vaadin-themable-mixin/vaadin-themable-mixin.js';
 
 /**
  * A mixin providing `focused`, `focus-ring`, `active`, `disabled` and `selected`.
@@ -14,6 +15,18 @@ import { FocusMixin } from '@vaadin/component-base/src/focus-mixin.js';
  */
 export const ItemMixin = (superClass) =>
   class VaadinItemMixin extends ActiveMixin(FocusMixin(superClass)) {
+    static get styles() {
+      return css`
+        :host {
+          display: inline-block;
+        }
+
+        :host([hidden]) {
+          display: none !important;
+        }
+      `;
+    }
+
     static get properties() {
       return {
         /**

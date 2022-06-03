@@ -6,33 +6,45 @@ import {
   focusout,
   mousedown,
   mouseup,
-  space,
+  nextFrame,
+  nextRender,
   spaceKeyDown,
   spaceKeyUp,
   tabKeyDown,
 } from '@vaadin/testing-helpers';
 import sinon from 'sinon';
-import { html, PolymerElement } from '@polymer/polymer/polymer-element.js';
+import { html as legacyHtml, PolymerElement } from '@polymer/polymer/polymer-element.js';
+import { html, LitElement } from 'lit';
+import { PolylitMixin } from '@vaadin/component-base/src/polylit-mixin.js';
 import { ItemMixin } from '../src/vaadin-item-mixin.js';
 
-class TestItem extends ItemMixin(PolymerElement) {
+class PolymerItem extends ItemMixin(PolymerElement) {
   static get template() {
+    return legacyHtml`<slot></slot>`;
+  }
+}
+
+customElements.define('polymer-item', PolymerItem);
+
+class LitItem extends ItemMixin(PolylitMixin(LitElement)) {
+  render() {
     return html`<slot></slot>`;
   }
 }
 
-customElements.define('test-item', TestItem);
+customElements.define('lit-item', LitItem);
 
-describe('vaadin-item-mixin', () => {
+const runTests = (tag) => {
   let item;
 
   describe('properties', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       item = fixtureSync(`
-        <test-item value="foo">
+        <${tag} value="foo">
           text-content
-        </test-item>
+        </${tag}>
       `);
+      await nextRender();
     });
 
     describe('selected', () => {
@@ -40,13 +52,15 @@ describe('vaadin-item-mixin', () => {
         expect(item.selected).to.be.false;
       });
 
-      it('should reflect selected to attribute', () => {
+      it('should reflect selected to attribute', async () => {
         item.selected = true;
+        await nextFrame();
         expect(item.hasAttribute('selected')).to.be.true;
       });
 
-      it('should set aria-selected attribute', () => {
+      it('should set aria-selected attribute', async () => {
         item.selected = true;
+        await nextFrame();
         expect(item.getAttribute('aria-selected')).to.equal('true');
       });
     });
@@ -56,22 +70,28 @@ describe('vaadin-item-mixin', () => {
         expect(item.disabled).to.be.false;
       });
 
-      it('should reflect disabled to attribute', () => {
+      it('should reflect disabled to attribute', async () => {
         item.disabled = true;
+        await nextFrame();
         expect(item.hasAttribute('disabled')).to.be.true;
       });
 
-      it('should set selected to false when disabled', () => {
+      it('should set selected to false when disabled', async () => {
         item.selected = true;
-        space(item);
+        await nextFrame();
+
         item.disabled = true;
+        await nextFrame();
         expect(item.selected).to.be.false;
       });
 
-      it('should have aria-disabled when disabled', () => {
+      it('should have aria-disabled when disabled', async () => {
         item.disabled = true;
+        await nextFrame();
         expect(item.getAttribute('aria-disabled')).to.equal('true');
+
         item.disabled = false;
+        await nextFrame();
         expect(item.getAttribute('aria-disabled')).to.be.null;
       });
     });
@@ -97,8 +117,9 @@ describe('vaadin-item-mixin', () => {
         expect(item.hasAttribute('focused')).to.be.true;
       });
 
-      it('should not set focused on programmatic focus when disabled', () => {
+      it('should not set focused on programmatic focus when disabled', async () => {
         item.disabled = true;
+        await nextFrame();
         item.focus();
         expect(item.hasAttribute('focused')).to.be.false;
       });
@@ -198,8 +219,9 @@ describe('vaadin-item-mixin', () => {
         expect(item.value).to.be.equal('foo');
       });
 
-      it('should not reflect value to attribute', () => {
+      it('should not reflect value to attribute', async () => {
         item.value = 'bar';
+        await nextFrame();
         expect(item.getAttribute('value')).to.be.equal('foo');
       });
     });
@@ -207,7 +229,7 @@ describe('vaadin-item-mixin', () => {
 
   describe('default value', () => {
     beforeEach(() => {
-      item = fixtureSync('<test-item>text-content</test-item>');
+      item = fixtureSync(`<${tag}>text-content</${tag}>`);
     });
 
     it('should use trimmed textContent', () => {
@@ -223,9 +245,9 @@ describe('vaadin-item-mixin', () => {
   describe('with clickable child', () => {
     beforeEach(() => {
       item = fixtureSync(`
-        <test-item>
+        <${tag}>
           <button>Clickable</button>
-        </test-item>
+        </${tag}>
       `);
     });
 
@@ -248,4 +270,12 @@ describe('vaadin-item-mixin', () => {
       expect(spy.called).to.be.false;
     });
   });
+};
+
+describe('ItemMixin + Polymer', () => {
+  runTests('polymer-item');
+});
+
+describe('ItemMixin + Lit', () => {
+  runTests('lit-item');
 });

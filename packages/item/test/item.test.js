@@ -1,12 +1,14 @@
 import { expect } from '@esm-bundle/chai';
-import { fixtureSync } from '@vaadin/testing-helpers';
+import { fixtureSync, nextRender } from '@vaadin/testing-helpers';
 import '../vaadin-item.js';
+import { Item } from '../src/vaadin-lit-item.js';
 
-describe('vaadin-item', () => {
+const runTests = (tag) => {
   let item, tagName;
 
-  beforeEach(() => {
-    item = fixtureSync('<vaadin-item>label</vaadin-item>');
+  beforeEach(async () => {
+    item = fixtureSync(`<${tag}>label</${tag}>`);
+    await nextRender();
     tagName = item.tagName.toLowerCase();
   });
 
@@ -40,4 +42,23 @@ describe('vaadin-item', () => {
     const content = item.shadowRoot.querySelector('[part="content"]');
     expect(getComputedStyle(content).display).to.equal('block');
   });
+};
+
+describe('Button + Polymer', () => {
+  runTests('vaadin-item');
+});
+
+describe('Button + Lit', () => {
+  const LIT_TAG = 'vaadin-lit-item';
+
+  customElements.define(
+    LIT_TAG,
+    class extends Item {
+      static get is() {
+        return LIT_TAG;
+      }
+    },
+  );
+
+  runTests(LIT_TAG);
 });
