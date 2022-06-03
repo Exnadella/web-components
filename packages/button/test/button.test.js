@@ -1,17 +1,18 @@
 import { expect } from '@esm-bundle/chai';
-import { fixtureSync } from '@vaadin/testing-helpers';
+import { fixtureSync, nextFrame, nextRender } from '@vaadin/testing-helpers';
 import { sendKeys } from '@web/test-runner-commands';
 import sinon from 'sinon';
 import '../vaadin-button.js';
+import { Button } from '../src/vaadin-lit-button.js';
 
-describe('vaadin-button', () => {
+const runTests = (tag) => {
   let element;
 
   describe('custom element definition', () => {
     let tagName;
 
     beforeEach(() => {
-      element = fixtureSync('<vaadin-button></vaadin-button>');
+      element = fixtureSync(`<${tag}></${tag}>`);
       tagName = element.tagName.toLowerCase();
     });
 
@@ -26,8 +27,9 @@ describe('vaadin-button', () => {
 
   describe('role', () => {
     describe('default', () => {
-      beforeEach(() => {
-        element = fixtureSync('<vaadin-button>Press me</vaadin-button>');
+      beforeEach(async () => {
+        element = fixtureSync(`<${tag}>Press me</${tag}>`);
+        await nextRender();
       });
 
       it('should set role attribute to button by default', () => {
@@ -36,8 +38,9 @@ describe('vaadin-button', () => {
     });
 
     describe('custom', () => {
-      beforeEach(() => {
-        element = fixtureSync('<vaadin-button role="menuitem">Press me</vaadin-button>');
+      beforeEach(async () => {
+        element = fixtureSync(`<${tag} role="menuitem">Press me</${tag}>`);
+        await nextRender();
       });
 
       it('should not override custom role attribute', () => {
@@ -47,8 +50,9 @@ describe('vaadin-button', () => {
   });
 
   describe('keyboard', () => {
-    beforeEach(() => {
-      element = fixtureSync('<vaadin-button>Press me</vaadin-button>');
+    beforeEach(async () => {
+      element = fixtureSync(`<${tag}>Press me</${tag}>`);
+      await nextRender();
       element.focus();
     });
 
@@ -66,6 +70,7 @@ describe('vaadin-button', () => {
         const spy = sinon.spy();
         element.addEventListener('click', spy);
         element.disabled = true;
+        await nextFrame();
 
         await sendKeys({ down: key });
 
@@ -78,7 +83,7 @@ describe('vaadin-button', () => {
 
         await sendKeys({ down: key });
 
-        const event = spy.args[0][0];
+        const event = spy.firstCall.args[0];
         expect(event).to.be.an.instanceOf(KeyboardEvent);
         expect(event.defaultPrevented).to.be.true;
       });
@@ -95,4 +100,23 @@ describe('vaadin-button', () => {
       expect(event.defaultPrevented).to.be.false;
     });
   });
+};
+
+describe('Button + Polymer', () => {
+  runTests('vaadin-button');
+});
+
+describe('Button + Lit', () => {
+  const LIT_TAG = 'vaadin-lit-button';
+
+  customElements.define(
+    LIT_TAG,
+    class extends Button {
+      static get is() {
+        return LIT_TAG;
+      }
+    },
+  );
+
+  runTests(LIT_TAG);
 });

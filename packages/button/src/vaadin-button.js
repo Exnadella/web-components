@@ -3,6 +3,7 @@
  * Copyright (c) 2017 - 2022 Vaadin Ltd.
  * This program is available under Apache License Version 2.0, available at https://vaadin.com/license/
  */
+import { htmlLiteral } from '@polymer/polymer/lib/utils/html-tag.js';
 import { html, PolymerElement } from '@polymer/polymer/polymer-element.js';
 import { ElementMixin } from '@vaadin/component-base/src/element-mixin.js';
 import { ThemableMixin } from '@vaadin/vaadin-themable-mixin/vaadin-themable-mixin.js';
@@ -49,50 +50,7 @@ class Button extends ButtonMixin(ElementMixin(ThemableMixin(PolymerElement))) {
   static get template() {
     return html`
       <style>
-        :host {
-          display: inline-block;
-          position: relative;
-          outline: none;
-          white-space: nowrap;
-          -webkit-user-select: none;
-          -moz-user-select: none;
-          user-select: none;
-        }
-
-        :host([hidden]) {
-          display: none !important;
-        }
-
-        /* Aligns the button with form fields when placed on the same line.
-          Note, to make it work, the form fields should have the same "::before" pseudo-element. */
-        .vaadin-button-container::before {
-          content: '\\2003';
-          display: inline-block;
-          width: 0;
-          max-height: 100%;
-        }
-
-        .vaadin-button-container {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          text-align: center;
-          width: 100%;
-          height: 100%;
-          min-height: inherit;
-          text-shadow: inherit;
-        }
-
-        [part='prefix'],
-        [part='suffix'] {
-          flex: none;
-        }
-
-        [part='label'] {
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
+        ${htmlLiteral([this.styles.cssText])}
       </style>
       <div class="vaadin-button-container">
         <span part="prefix">
