@@ -1,13 +1,15 @@
 import { expect } from '@esm-bundle/chai';
-import { fixtureSync, nextFrame, oneEvent } from '@vaadin/testing-helpers';
+import { fixtureSync, nextFrame, nextRender, oneEvent } from '@vaadin/testing-helpers';
 import sinon from 'sinon';
 import '../src/vaadin-text-area.js';
+import { TextArea } from '../src/vaadin-lit-text-area.js';
 
-describe('text-area', () => {
+const runTests = (tag) => {
   let textArea;
 
-  beforeEach(() => {
-    textArea = fixtureSync('<vaadin-text-area></vaadin-text-area>');
+  beforeEach(async () => {
+    textArea = fixtureSync(`<${tag}></${tag}>`);
+    await nextRender();
   });
 
   describe('properties', () => {
@@ -18,8 +20,10 @@ describe('text-area', () => {
     });
 
     describe('native', () => {
-      function assertAttrCanBeSet(prop, value) {
+      async function assertAttrCanBeSet(prop, value) {
         textArea[prop] = value;
+        await nextFrame();
+
         const attrValue = native.getAttribute(prop);
 
         if (value === true) {
@@ -31,49 +35,48 @@ describe('text-area', () => {
         }
       }
 
-      function assertPropCanBeSet(prop, value) {
-        for (let i = 0; i < 3; i++) {
-          // Check different values
-          const newValue = typeof value === 'boolean' ? i % 2 === 0 : value + i;
-          textArea[prop] = newValue;
-          expect(native[prop]).to.be.equal(newValue);
-        }
-      }
-
       ['placeholder', 'value'].forEach((prop) => {
-        it(`should set string property ${prop}`, () => {
-          assertPropCanBeSet(prop, 'foo');
+        it(`should set string property ${prop}`, async () => {
+          textArea[prop] = 'foo';
+          await nextFrame();
+          expect(native[prop]).to.be.equal('foo');
         });
       });
 
       ['disabled'].forEach((prop) => {
-        it(`should set boolean property ${prop}`, () => {
-          assertPropCanBeSet(prop, true);
+        it(`should set boolean property ${prop}`, async () => {
+          textArea[prop] = true;
+          await nextFrame();
+          expect(native[prop]).to.be.equal(true);
+
+          textArea[prop] = false;
+          await nextFrame();
+          expect(native[prop]).to.be.false;
         });
       });
 
       ['maxlength', 'minlength'].forEach((prop) => {
-        it(`should set numeric attribute ${prop}`, () => {
-          assertAttrCanBeSet(prop, 2);
+        it(`should set numeric attribute ${prop}`, async () => {
+          await assertAttrCanBeSet(prop, 2);
         });
       });
 
       ['autocomplete'].forEach((prop) => {
-        it(`should set boolean attribute ${prop}`, () => {
-          assertAttrCanBeSet(prop, 'on');
+        it(`should set boolean attribute ${prop}`, async () => {
+          await assertAttrCanBeSet(prop, 'on');
         });
       });
 
       ['autocapitalize'].forEach((prop) => {
-        it(`should set boolean attribute ${prop}`, () => {
-          assertAttrCanBeSet(prop, 'none');
+        it(`should set boolean attribute ${prop}`, async () => {
+          await assertAttrCanBeSet(prop, 'none');
         });
       });
 
       ['autocomplete', 'autocorrect', 'readonly', 'required'].forEach((prop) => {
-        it(`should set boolean attribute ${prop}`, () => {
-          assertAttrCanBeSet(prop, true);
-          assertAttrCanBeSet(prop, false);
+        it(`should set boolean attribute ${prop}`, async () => {
+          await assertAttrCanBeSet(prop, true);
+          await assertAttrCanBeSet(prop, false);
         });
       });
     });
@@ -89,55 +92,66 @@ describe('text-area', () => {
         expect(textArea.value).to.be.equal('foo');
       });
 
-      it('should update has-value attribute when value is set', () => {
+      it('should update has-value attribute when value is set', async () => {
         textArea.value = 'foo';
+        await nextFrame();
         expect(textArea.hasAttribute('has-value')).to.be.true;
       });
 
-      it('should not update has-value attribute when value is set to undefined', () => {
+      it('should not update has-value attribute when value is set to undefined', async () => {
         textArea.value = undefined;
+        await nextFrame();
         expect(textArea.hasAttribute('has-value')).to.be.false;
       });
 
-      it('should not update has-value attribute when value is set to empty string', () => {
+      it('should not update has-value attribute when value is set to empty string', async () => {
         textArea.value = '';
+        await nextFrame();
         expect(textArea.hasAttribute('has-value')).to.be.false;
       });
 
       // User could accidentally set a 0 or false value
-      it('should update has-value attribute when numeric value is set', () => {
+      it('should update has-value attribute when numeric value is set', async () => {
         textArea.value = 0;
+        await nextFrame();
         expect(textArea.hasAttribute('has-value')).to.be.true;
       });
 
-      it('should update has-value attribute when boolean value is set', () => {
+      it('should update has-value attribute when boolean value is set', async () => {
         textArea.value = false;
+        await nextFrame();
         expect(textArea.hasAttribute('has-value')).to.be.true;
       });
     });
 
     describe('validation', () => {
-      it('should not validate the field when minlength is set', () => {
+      it('should not validate the field when minlength is set', async () => {
         textArea.minlength = 2;
+        await nextFrame();
         expect(textArea.invalid).to.be.false;
       });
 
-      it('should not validate the field when maxlength is set', () => {
+      it('should not validate the field when maxlength is set', async () => {
         textArea.maxlength = 6;
+        await nextFrame();
         expect(textArea.invalid).to.be.false;
       });
 
-      it('should validate the field when invalid after minlength is changed', () => {
+      it('should validate the field when invalid after minlength is changed', async () => {
         textArea.invalid = true;
+        await nextFrame();
         const spy = sinon.spy(textArea, 'validate');
         textArea.minlength = 2;
+        await nextFrame();
         expect(spy.calledOnce).to.be.true;
       });
 
-      it('should validate the field when invalid after maxlength is changed', () => {
+      it('should validate the field when invalid after maxlength is changed', async () => {
         textArea.invalid = true;
+        await nextFrame();
         const spy = sinon.spy(textArea, 'validate');
         textArea.maxlength = 6;
+        await nextFrame();
         expect(spy.calledOnce).to.be.true;
       });
     });
@@ -147,8 +161,11 @@ describe('text-area', () => {
     it('should update height on show after hidden', async () => {
       const savedHeight = textArea.clientHeight;
       textArea.hidden = true;
+      await nextFrame();
       // Three new lines will expand initial height
       textArea.value = '\n\n\n';
+      await nextFrame();
+
       textArea.hidden = false;
       await oneEvent(textArea, 'animationend');
       expect(textArea.clientHeight).to.be.above(savedHeight);
@@ -164,9 +181,10 @@ describe('text-area', () => {
   });
 
   describe('prevent invalid input', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       textArea.preventInvalidInput = true;
       textArea.value = '1';
+      await nextFrame();
     });
 
     function inputText(value) {
@@ -174,14 +192,16 @@ describe('text-area', () => {
       textArea.inputElement.dispatchEvent(new CustomEvent('input'));
     }
 
-    it('should prevent non matching input', () => {
+    it('should prevent non matching input', async () => {
       textArea.pattern = '[0-9]*';
+      await nextFrame();
       inputText('f');
       expect(textArea.inputElement.value).to.equal('1');
     });
 
-    it('should not prevent input when pattern is invalid', () => {
+    it('should not prevent input when pattern is invalid', async () => {
       textArea.pattern = '[0-9])))]*';
+      await nextFrame();
       inputText('f');
       expect(textArea.inputElement.value).to.equal('f');
     });
@@ -196,17 +216,18 @@ describe('text-area', () => {
       container = textArea.shadowRoot.querySelector('.vaadin-text-area-container');
     });
 
-    it('should grow height with unwrapped text', () => {
+    it('should grow height with unwrapped text', async () => {
       const originalHeight = parseInt(window.getComputedStyle(inputField).height);
 
       // Make sure there are enough characters to grow the textarea
       textArea.value = Array(400).join('400');
+      await nextFrame();
 
       const newHeight = parseInt(window.getComputedStyle(inputField).height);
       expect(newHeight).to.be.at.least(originalHeight + 10);
     });
 
-    it('should not grow over max-height', () => {
+    it('should not grow over max-height', async () => {
       inputField.style.padding = '0';
       inputField.style.border = 'none';
       textArea.style.maxHeight = '100px';
@@ -219,13 +240,14 @@ describe('text-area', () => {
         lot
         of
         rows`;
+      await nextFrame();
 
       expect(parseFloat(window.getComputedStyle(textArea).height)).to.be.lte(100);
       expect(parseFloat(window.getComputedStyle(container).height)).to.be.lte(100);
       expect(parseFloat(window.getComputedStyle(inputField).height)).to.be.lte(100);
     });
 
-    it('should not shrink less than min-height', () => {
+    it('should not shrink less than min-height', async () => {
       textArea.style.minHeight = '125px';
 
       expect(window.getComputedStyle(textArea).height).to.be.equal('125px');
@@ -234,13 +256,14 @@ describe('text-area', () => {
 
       // Check that value modification doesn't break min-height rule
       textArea.value = '1 row';
+      await nextFrame();
 
       expect(window.getComputedStyle(textArea).height).to.be.equal('125px');
       expect(window.getComputedStyle(container).height).to.be.equal('125px');
       expect(parseFloat(window.getComputedStyle(inputField).height)).to.be.above(100);
     });
 
-    it('should stay between min and max height', () => {
+    it('should stay between min and max height', async () => {
       textArea.style.minHeight = '100px';
       textArea.style.maxHeight = '175px';
 
@@ -261,39 +284,52 @@ describe('text-area', () => {
         and
         even
         more`;
+      await nextFrame();
 
       expect(window.getComputedStyle(textArea).height).to.be.equal('175px');
       expect(window.getComputedStyle(container).height).to.be.equal('175px');
       expect(parseFloat(window.getComputedStyle(inputField).height)).to.be.above(150);
     });
 
-    it('should increase inputField height', () => {
+    it('should increase inputField height', async () => {
       textArea.style.height = '200px';
       textArea.value = 'foo';
+      await nextFrame();
       expect(inputField.clientHeight).to.be.closeTo(200, 10);
     });
 
-    it('should maintain scroll top', () => {
+    it('should maintain scroll top', async () => {
       textArea.style.maxHeight = '100px';
       textArea.value = Array(400).join('400');
+      await nextFrame();
+
       inputField.scrollTop = 200;
       textArea.value += 'foo';
+      await nextFrame();
+
       expect(inputField.scrollTop).to.equal(200);
     });
 
-    it('should decrease height automatically', () => {
+    it('should decrease height automatically', async () => {
       textArea.value = Array(400).join('400');
+      await nextFrame();
+
       const height = textArea.clientHeight;
       textArea.value = '';
+      await nextFrame();
+
       expect(textArea.clientHeight).to.be.below(height);
     });
 
-    it('should not change height', () => {
+    it('should not change height', async () => {
       textArea.style.maxHeight = '100px';
       textArea.value = Array(400).join('400');
-      const height = textArea.clientHeight;
+      await nextFrame();
 
+      const height = textArea.clientHeight;
       textArea.value = textArea.value.slice(0, -1);
+      await nextFrame();
+
       expect(textArea.clientHeight).to.equal(height);
     });
 
@@ -312,21 +348,25 @@ describe('text-area', () => {
       );
     });
 
-    it('should have matching height', () => {
+    it('should have matching height', async () => {
       inputField.style.padding = '0';
       textArea.style.maxHeight = '100px';
 
       textArea.value = Array(400).join('400');
+      await nextFrame();
+
       textArea.value = textArea.value.slice(0, -1);
+      await nextFrame();
       expect(native.clientHeight).to.equal(inputField.scrollHeight);
     });
 
-    it('should cover native field', () => {
+    it('should cover native field', async () => {
       inputField.style.padding = '0';
       inputField.style.border = 'none';
       textArea.style.minHeight = '300px';
       textArea.style.padding = '0';
       textArea.value = 'foo';
+      await nextFrame();
 
       expect(native.clientHeight).to.equal(
         Math.round(
@@ -356,9 +396,10 @@ describe('text-area', () => {
           .style.getPropertyValue('--_text-area-vertical-scroll-position');
       }
 
-      beforeEach(() => {
+      beforeEach(async () => {
         textArea.style.height = '100px';
         textArea.value = 'a\nb\nc\nd\ne\nf\ng\nh\ni\nj\nk\nl\nm\nn\no\np\nq\nr\ns\nt\nu\nv\nw\nx\ny\nz';
+        await nextFrame();
       });
 
       it('should be 0 initially', () => {
@@ -386,11 +427,6 @@ describe('text-area', () => {
         expect(e.defaultPrevented).to.be.true;
       });
 
-      it('should not cancel wheel event if text area is not scrolled', () => {
-        const e = wheel({ deltaY: -10 });
-        expect(e.defaultPrevented).to.be.false;
-      });
-
       it('should update value on resize', async () => {
         inputField.scrollTop = 10;
         await nextFrame();
@@ -411,80 +447,124 @@ describe('text-area', () => {
       element.dispatchEvent(new CustomEvent('input'));
     }
 
-    beforeEach(() => {
+    beforeEach(async () => {
       element = fixtureSync('<vaadin-text-area></vaadin-text-area>');
+      await nextFrame();
     });
 
-    it('should be valid when pattern property is not set', () => {
+    it('should be valid when pattern property is not set', async () => {
       element.pattern = null;
+      await nextFrame();
       userSetValue('abc');
+      await nextFrame();
       expect(element.validate()).to.be.true;
     });
 
-    it('should be valid when value property is empty', () => {
+    it('should be valid when value property is empty', async () => {
       element.pattern = '[A-Z]+';
+      await nextFrame();
       userSetValue('');
+      await nextFrame();
       expect(element.validate()).to.be.true;
     });
 
-    it('should be valid when value property matches the pattern', () => {
+    it('should be valid when value property matches the pattern', async () => {
       element.pattern = '[A-Z]{1}';
+      await nextFrame();
       userSetValue('A');
+      await nextFrame();
       expect(element.validate()).to.be.true;
     });
 
-    it('should be valid when value property matches the pattern (multiline)', () => {
+    it('should be valid when value property matches the pattern (multiline)', async () => {
       element.pattern = '[A-Z\n]{3}';
+      await nextFrame();
       userSetValue('A\nJ');
+      await nextFrame();
       expect(element.validate()).to.be.true;
     });
 
-    it('should be valid when unicode value property matches the pattern', () => {
+    it('should be valid when unicode value property matches the pattern', async () => {
       element.pattern = '[A-Z]+';
+      await nextFrame();
       userSetValue('\u0041\u0042\u0043');
+      await nextFrame();
       expect(element.validate()).to.be.true;
     });
 
-    it('should be invalid when value property mismatches the pattern', () => {
+    it('should be invalid when value property mismatches the pattern', async () => {
       element.pattern = '[a-z]{3,}';
+      await nextFrame();
       userSetValue('ABCD');
+      await nextFrame();
       expect(element.validate()).to.be.false;
     });
 
-    it('should be invalid when value property mismatches the pattern, even if a subset matches', () => {
+    it('should be invalid when value property mismatches the pattern, even if a subset matches', async () => {
       element.pattern = '[A-Z]+';
+      await nextFrame();
       userSetValue('ABC123');
+      await nextFrame();
       expect(element.validate()).to.be.false;
     });
 
-    it('should be valid when pattern contains invalid regular expression', () => {
+    it('should be valid when pattern contains invalid regular expression', async () => {
       element.pattern = '(abc';
+      await nextFrame();
       userSetValue('de');
+      await nextFrame();
       expect(element.validate()).to.be.true;
     });
 
-    it('should be valid when pattern tries to escape a group', () => {
+    it('should be valid when pattern tries to escape a group', async () => {
       element.pattern = 'a)(b';
+      await nextFrame();
       userSetValue('de');
+      await nextFrame();
       expect(element.validate()).to.be.true;
     });
 
-    it('should be valid when pattern uses Unicode features', () => {
+    it('should be valid when pattern uses Unicode features', async () => {
       element.pattern = 'a\u{10FFFF}';
+      await nextFrame();
       userSetValue('a\u{10FFFF}');
+      await nextFrame();
       expect(element.validate()).to.be.true;
     });
 
-    it('should be valid when value matches JavaScript-specific regular expression', () => {
+    it('should be valid when value matches JavaScript-specific regular expression', async () => {
       element.pattern = '\\u1234\\cx[5-[]{2}';
+      await nextFrame();
       userSetValue('\u1234\x18[6');
+      await nextFrame();
       expect(element.validate()).to.be.true;
     });
 
-    it('should be invalid when value mismatches JavaScript-specific regular expression', () => {
+    it('should be invalid when value mismatches JavaScript-specific regular expression', async () => {
       element.pattern = '\\u1234\\cx[5-[]{2}';
+      await nextFrame();
       userSetValue('\u1234\x18[4');
+      await nextFrame();
       expect(element.validate()).to.be.false;
     });
   });
+};
+
+describe('TextArea + Polymer', () => {
+  runTests('vaadin-text-area');
+});
+
+describe('TextArea + Lit', () => {
+  const LIT_TAG = 'vaadin-lit-text-area';
+
+  customElements.define(
+    LIT_TAG,
+    class extends TextArea {
+      static get is() {
+        return LIT_TAG;
+      }
+    },
+  );
+
+  runTests(LIT_TAG);
 });
