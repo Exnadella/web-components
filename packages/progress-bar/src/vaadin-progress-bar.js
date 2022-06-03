@@ -3,6 +3,7 @@
  * Copyright (c) 2017 - 2022 Vaadin Ltd.
  * This program is available under Apache License Version 2.0, available at https://vaadin.com/license/
  */
+import { htmlLiteral } from '@polymer/polymer/lib/utils/html-tag.js';
 import { html, PolymerElement } from '@polymer/polymer/polymer-element.js';
 import { ElementMixin } from '@vaadin/component-base/src/element-mixin.js';
 import { ThemableMixin } from '@vaadin/vaadin-themable-mixin/vaadin-themable-mixin.js';
@@ -48,33 +49,8 @@ class ProgressBar extends ElementMixin(ThemableMixin(ProgressMixin(PolymerElemen
   static get template() {
     return html`
       <style>
-        :host {
-          display: block;
-          width: 100%; /* prevent collapsing inside non-stretching column flex */
-          height: 8px;
-        }
-
-        :host([hidden]) {
-          display: none !important;
-        }
-
-        [part='bar'] {
-          height: 100%;
-        }
-
-        [part='value'] {
-          height: 100%;
-          transform-origin: 0 50%;
-          transform: scaleX(var(--vaadin-progress-value));
-        }
-
-        /* RTL specific styles */
-
-        :host([dir='rtl']) [part='value'] {
-          transform-origin: 100% 50%;
-        }
+        ${htmlLiteral([this.styles.cssText])}
       </style>
-
       <div part="bar">
         <div part="value"></div>
       </div>
