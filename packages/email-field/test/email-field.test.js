@@ -1,6 +1,7 @@
 import { expect } from '@esm-bundle/chai';
-import { fixtureSync } from '@vaadin/testing-helpers';
+import { fixtureSync, nextFrame, nextRender } from '@vaadin/testing-helpers';
 import '../src/vaadin-email-field.js';
+import { EmailField } from '../src/vaadin-lit-email-field.js';
 
 const validAddresses = [
   'email@example.com',
@@ -30,18 +31,20 @@ const invalidAddresses = [
   'email@example',
 ];
 
-describe('email-field', () => {
+const runTests = (tag) => {
   describe('default', () => {
     let emailField;
 
-    beforeEach(() => {
-      emailField = fixtureSync('<vaadin-email-field></vaadin-email-field>');
+    beforeEach(async () => {
+      emailField = fixtureSync(`<${tag}></${tag}>`);
+      await nextRender();
     });
 
     describe('valid email addresses', () => {
       validAddresses.forEach((address) => {
-        it(`should treat ${address} as valid`, () => {
+        it(`should treat ${address} as valid`, async () => {
           emailField.value = address;
+          await nextFrame();
           emailField.validate();
           expect(emailField.invalid).to.be.false;
         });
@@ -50,8 +53,9 @@ describe('email-field', () => {
 
     describe('invalid email addresses', () => {
       invalidAddresses.forEach((address) => {
-        it(`should treat ${address} as invalid`, () => {
+        it(`should treat ${address} as invalid`, async () => {
           emailField.value = address;
+          await nextFrame();
           emailField.validate();
           expect(emailField.invalid).to.be.true;
         });
@@ -62,8 +66,9 @@ describe('email-field', () => {
   describe('custom pattern', () => {
     let emailField;
 
-    beforeEach(() => {
-      emailField = fixtureSync('<vaadin-email-field pattern=".+@example.com"></vaadin-email-field>');
+    beforeEach(async () => {
+      emailField = fixtureSync(`<${tag} pattern=".+@example.com"></${tag}>`);
+      await nextRender();
     });
 
     it('should not override custom pattern', () => {
@@ -74,8 +79,9 @@ describe('email-field', () => {
   describe('invalid', () => {
     let field;
 
-    beforeEach(() => {
-      field = fixtureSync('<vaadin-email-field invalid></vaadin-email-field>');
+    beforeEach(async () => {
+      field = fixtureSync(`<${tag} invalid></${tag}>`);
+      await nextRender();
     });
 
     it('should not remove "invalid" state when ready', () => {
@@ -86,12 +92,32 @@ describe('email-field', () => {
   describe('invalid with value', () => {
     let field;
 
-    beforeEach(() => {
-      field = fixtureSync('<vaadin-email-field invalid value="foo@example.com"></vaadin-email-field>');
+    beforeEach(async () => {
+      field = fixtureSync(`<${tag} invalid value="foo@example.com"></${tag}>`);
+      await nextRender();
     });
 
     it('should not remove "invalid" state when ready', () => {
       expect(field.invalid).to.be.true;
     });
   });
+};
+
+describe('EmailField + Polymer', () => {
+  runTests('vaadin-email-field');
+});
+
+describe('EmailField + Lit', () => {
+  const LIT_TAG = 'vaadin-lit-email-field';
+
+  customElements.define(
+    LIT_TAG,
+    class extends EmailField {
+      static get is() {
+        return LIT_TAG;
+      }
+    },
+  );
+
+  runTests(LIT_TAG);
 });
