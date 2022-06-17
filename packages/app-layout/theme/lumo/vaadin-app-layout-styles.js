@@ -10,12 +10,8 @@ registerStyles(
       background: var(--lumo-base-color) linear-gradient(var(--lumo-contrast-5pct), var(--lumo-contrast-5pct));
     }
 
-    :host(:not([dir='rtl']):not([overlay])) [part='drawer'] {
-      border-right: 1px solid var(--lumo-contrast-10pct);
-    }
-
-    :host([dir='rtl']:not([overlay])) [part='drawer'] {
-      border-left: 1px solid var(--lumo-contrast-10pct);
+    :host(:not([overlay])) [part='drawer'] {
+      border-inline-end: 1px solid var(--lumo-contrast-10pct);
     }
 
     :host([overlay]) [part='drawer']::before {
