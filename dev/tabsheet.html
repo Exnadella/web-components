@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TabSheet</title>
+    <script type="module" src="./common.js"></script>
+
+    <script type="module">
+      import '@vaadin/tabs';
+      import '@vaadin/tabs/src/vaadin-tabsheet';
+    </script>
+  </head>
+
+  <body>
+    <vaadin-tabsheet>
+      <div slot="prefix">Prefix</div>
+      <div slot="suffix">Suffix</div>
+
+      <vaadin-tab>Analytics</vaadin-tab>
+      <vaadin-tabsheet-panel slot="panel">
+        <h1>This is the Analytics content</h1>
+      </vaadin-tabsheet-panel>
+
+      <vaadin-tab>Customers</vaadin-tab>
+      <vaadin-tabsheet-panel slot="panel">
+        <h1>This is the Customers content</h1>
+      </vaadin-tabsheet-panel>
+
+      <vaadin-tab>Dashboards</vaadin-tab>
+      <vaadin-tabsheet-panel slot="panel">
+        <h1>This is the Dashboards content</h1>
+      </vaadin-tabsheet-panel>
+
+      <vaadin-tab>Documents</vaadin-tab>
+      <vaadin-tabsheet-panel slot="panel">
+        <h1>This is the Documents content</h1>
+      </vaadin-tabsheet-panel>
+
+      <vaadin-tab>Orders</vaadin-tab>
+      <vaadin-tabsheet-panel slot="panel">
+        <h1>This is the Orders content</h1>
+      </vaadin-tabsheet-panel>
+    </vaadin-tabsheet>
+
+    <hr />
+
+    <vaadin-tabsheet orientation="vertical">
+      <div slot="prefix">Prefix</div>
+      <div slot="suffix">Suffix</div>
+
+      <vaadin-tab>Analytics</vaadin-tab>
+      <vaadin-tabsheet-panel slot="panel">
+        <h1>This is the Analytics content</h1>
+      </vaadin-tabsheet-panel>
+
+      <vaadin-tab>Customers</vaadin-tab>
+      <vaadin-tabsheet-panel slot="panel">
+        <h1>This is the Customers content</h1>
+      </vaadin-tabsheet-panel>
+
+      <vaadin-tab>Dashboards</vaadin-tab>
+      <vaadin-tabsheet-panel slot="panel">
+        <h1>This is the Dashboards content</h1>
+      </vaadin-tabsheet-panel>
+
+      <vaadin-tab>Documents</vaadin-tab>
+      <vaadin-tabsheet-panel slot="panel">
+        <h1>This is the Documents content</h1>
+      </vaadin-tabsheet-panel>
+
+      <vaadin-tab>Orders</vaadin-tab>
+      <vaadin-tabsheet-panel slot="panel">
+        <h1>This is the Orders content</h1>
+      </vaadin-tabsheet-panel>
+    </vaadin-tabsheet>
+  </body>
+</html>
