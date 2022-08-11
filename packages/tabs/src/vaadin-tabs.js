@@ -8,8 +8,26 @@ import { afterNextRender } from '@polymer/polymer/lib/utils/render-status.js';
 import { html, PolymerElement } from '@polymer/polymer/polymer-element.js';
 import { ElementMixin } from '@vaadin/component-base/src/element-mixin.js';
 import { ResizeMixin } from '@vaadin/component-base/src/resize-mixin.js';
+import { generateUniqueId } from '@vaadin/component-base/src/unique-id-utils.js';
+import { Scroller } from '@vaadin/scroller';
 import { ListMixin } from '@vaadin/vaadin-list-mixin/vaadin-list-mixin.js';
 import { ThemableMixin } from '@vaadin/vaadin-themable-mixin/vaadin-themable-mixin.js';
+
+class TabSheetScroller extends Scroller {
+  static get is() {
+    return 'vaadin-tabsheet-scroller';
+  }
+}
+
+customElements.define(TabSheetScroller.is, TabSheetScroller);
+
+class TabsPanel extends PolymerElement {
+  static get is() {
+    return 'vaadin-tabs-panel';
+  }
+}
+
+customElements.define(TabsPanel.is, TabsPanel);
 
 /**
  * `<vaadin-tabs>` is a Web Component for easy switching between different views.
@@ -57,15 +75,14 @@ class Tabs extends ResizeMixin(ElementMixin(ListMixin(ThemableMixin(PolymerEleme
       <style>
         :host {
           display: flex;
-          align-items: center;
         }
 
         :host([hidden]) {
           display: none !important;
         }
 
-        :host([orientation='vertical']) {
-          display: block;
+        :host([orientation='horizontal']) {
+          flex-direction: column;
         }
 
         :host([orientation='horizontal']) [part='tabs'] {
@@ -130,14 +147,46 @@ class Tabs extends ResizeMixin(ElementMixin(ListMixin(ThemableMixin(PolymerEleme
         :host([dir='rtl']) [part='forward-button']::after {
           content: '◀';
         }
-      </style>
-      <div on-click="_scrollBack" part="back-button" aria-hidden="true"></div>
 
-      <div id="scroll" part="tabs">
-        <slot></slot>
+        /* Tabsheet styles */
+
+        [part='tabs-container'] {
+          display: flex;
+          align-items: baseline;
+        }
+
+        :host([orientation='horizontal']) [part='tabs-container'] {
+          width: 100%;
+        }
+
+        :host([orientation='vertical']) [part='tabs-container'] {
+          flex-direction: column;
+        }
+
+        [part='tabs-wrapper'] {
+          overflow: hidden;
+          position: relative;
+        }
+      </style>
+
+      <div part="tabs-container">
+        <slot name="prefix"></slot>
+
+        <div part="tabs-wrapper">
+          <div on-click="_scrollBack" part="back-button" aria-hidden="true"></div>
+
+          <div id="scroll" part="tabs">
+            <slot></slot>
+          </div>
+
+          <div on-click="_scrollForward" part="forward-button" aria-hidden="true"></div>
+        </div>
+        <slot name="suffix"></slot>
       </div>
 
-      <div on-click="_scrollForward" part="forward-button" aria-hidden="true"></div>
+      <vaadin-tabsheet-scroller>
+        <slot name="panel"></slot>
+      </vaadin-tabsheet-scroller>
     `;
   }
 
@@ -167,7 +216,7 @@ class Tabs extends ResizeMixin(ElementMixin(ListMixin(ThemableMixin(PolymerEleme
   }
 
   static get observers() {
-    return ['__tabsItemsChanged(items, items.*)'];
+    return ['__tabsItemsChanged(items, selected)'];
   }
 
   constructor() {
@@ -199,13 +248,26 @@ class Tabs extends ResizeMixin(ElementMixin(ListMixin(ThemableMixin(PolymerEleme
   }
 
   /** @private */
-  __tabsItemsChanged(items) {
+  __tabsItemsChanged(items, selected) {
+    if (!items || selected === undefined) {
+      return;
+    }
+
     // Disconnected to unobserve any removed items
     this.__itemsResizeObserver.disconnect();
 
     // Observe current items
-    (items || []).forEach((item) => {
-      this.__itemsResizeObserver.observe(item);
+    (items || []).forEach((tab, index) => {
+      this.__itemsResizeObserver.observe(tab);
+
+      if (tab.nextElementSibling instanceof TabsPanel) {
+        const panel = tab.nextElementSibling;
+        panel.hidden = index !== selected;
+        panel.role = 'tabpanel';
+        panel.id = panel.id || `${panel.localName}-${generateUniqueId()}`;
+
+        tab.setAttribute('aria-controls', panel.id);
+      }
     });
 
     this._updateOverflow();
