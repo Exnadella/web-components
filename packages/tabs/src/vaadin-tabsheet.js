@@ -11,24 +11,7 @@ import { ControllerMixin } from '@vaadin/component-base/src/controller-mixin.js'
 import { ElementMixin } from '@vaadin/component-base/src/element-mixin.js';
 import { SlotController } from '@vaadin/component-base/src/slot-controller.js';
 import { generateUniqueId } from '@vaadin/component-base/src/unique-id-utils.js';
-import { Scroller } from '@vaadin/scroller';
 import { ThemableMixin } from '@vaadin/vaadin-themable-mixin/vaadin-themable-mixin.js';
-
-class TabSheetScroller extends Scroller {
-  static get is() {
-    return 'vaadin-tabsheet-scroller';
-  }
-}
-
-customElements.define(TabSheetScroller.is, TabSheetScroller);
-
-class TabSheetPanel extends PolymerElement {
-  static get is() {
-    return 'vaadin-tabsheet-panel';
-  }
-}
-
-customElements.define(TabSheetPanel.is, TabSheetPanel);
 
 class TabSheet extends ControllerMixin(ElementMixin(ThemableMixin(PolymerElement))) {
   static get template() {
@@ -42,7 +25,7 @@ class TabSheet extends ControllerMixin(ElementMixin(ThemableMixin(PolymerElement
           flex-direction: column;
         }
 
-        ::slotted(vaadin-tabsheet-panel) {
+        ::slotted([slot='panel']) {
           flex-basis: 100%;
         }
 
@@ -63,6 +46,10 @@ class TabSheet extends ControllerMixin(ElementMixin(ThemableMixin(PolymerElement
         [part='tabs'] {
           overflow: hidden;
         }
+
+        [part='panel-container'] {
+          overflow: auto;
+        }
       </style>
 
       <div part="tabs-container">
@@ -73,9 +60,9 @@ class TabSheet extends ControllerMixin(ElementMixin(ThemableMixin(PolymerElement
         <slot name="suffix"></slot>
       </div>
 
-      <vaadin-tabsheet-scroller>
+      <div part="panel-container">
         <slot name="panel"></slot>
-      </vaadin-tabsheet-scroller>
+      </div>
     `;
   }
 
