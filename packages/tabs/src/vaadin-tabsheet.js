@@ -5,20 +5,14 @@
  * This program is available under Apache License Version 2.0, available at https://vaadin.com/license/
  */
 import './vaadin-tab.js';
+import { FlattenedNodesObserver } from '@polymer/polymer/lib/utils/flattened-nodes-observer.js';
 import { html, PolymerElement } from '@polymer/polymer/polymer-element.js';
+import { ControllerMixin } from '@vaadin/component-base/src/controller-mixin.js';
 import { ElementMixin } from '@vaadin/component-base/src/element-mixin.js';
+import { SlotController } from '@vaadin/component-base/src/slot-controller.js';
 import { generateUniqueId } from '@vaadin/component-base/src/unique-id-utils.js';
 import { Scroller } from '@vaadin/scroller';
 import { ThemableMixin } from '@vaadin/vaadin-themable-mixin/vaadin-themable-mixin.js';
-import { Tabs } from './vaadin-tabs.js';
-
-class TabSheetTabs extends Tabs {
-  static get is() {
-    return 'vaadin-tabsheet-tabs';
-  }
-}
-
-customElements.define(TabSheetTabs.is, TabSheetTabs);
 
 class TabSheetScroller extends Scroller {
   static get is() {
@@ -36,7 +30,7 @@ class TabSheetPanel extends PolymerElement {
 
 customElements.define(TabSheetPanel.is, TabSheetPanel);
 
-class TabSheet extends ElementMixin(ThemableMixin(PolymerElement)) {
+class TabSheet extends ControllerMixin(ElementMixin(ThemableMixin(PolymerElement))) {
   static get template() {
     return html`
       <style>
@@ -58,11 +52,12 @@ class TabSheet extends ElementMixin(ThemableMixin(PolymerElement)) {
 
         [part='tabs-container'] {
           display: flex;
+          flex-direction: column;
           align-items: baseline;
         }
 
-        :host([orientation='vertical']) [part='tabs-container'] {
-          flex-direction: column;
+        :host([orientation='horizontal']) [part='tabs-container'] {
+          flex-direction: row;
         }
 
         [part='tabs'] {
@@ -73,15 +68,7 @@ class TabSheet extends ElementMixin(ThemableMixin(PolymerElement)) {
       <div part="tabs-container">
         <slot name="prefix"></slot>
 
-        <vaadin-tabsheet-tabs
-          part="tabs"
-          orientation="[[orientation]]"
-          selected="{{selected}}"
-          items="{{__items}}"
-          selected="{{selected}}"
-        >
-          <slot></slot>
-        </vaadin-tabsheet-tabs>
+        <slot name="tabs"></slot>
 
         <slot name="suffix"></slot>
       </div>
@@ -106,7 +93,6 @@ class TabSheet extends ElementMixin(ThemableMixin(PolymerElement)) {
         reflectToAttribute: true,
         value: 'horizontal',
         type: String,
-        observer: '__orientationChanged',
       },
 
       /**
@@ -117,7 +103,15 @@ class TabSheet extends ElementMixin(ThemableMixin(PolymerElement)) {
         type: Number,
       },
 
-      __items: {
+      __tabs: {
+        type: Object,
+      },
+
+      __tabItems: {
+        type: Array,
+      },
+
+      __panels: {
         type: Array,
       },
     };
@@ -128,28 +122,75 @@ class TabSheet extends ElementMixin(ThemableMixin(PolymerElement)) {
     this.role = 'tablist';
   }
 
-  static get observers() {
-    return ['__tabsItemsChanged(__items, selected)'];
+  ready() {
+    super.ready();
+
+    this._tabsController = new SlotController(this, 'tabs', null, (_host, tabs) => {
+      this.__tabs = tabs;
+      this.__tabItems = tabs.items;
+
+      tabs.orientation = this.orientation;
+      tabs.selected = this.selected;
+      tabs.addEventListener('items-changed', () => {
+        this.__tabItems = tabs.items;
+      });
+      tabs.addEventListener('selected-changed', () => {
+        this.selected = tabs.selected;
+      });
+    });
+    this.addController(this._tabsController);
+
+    // TODO: Implement support for multiple nodes in slot controller
+    const panelSlot = this.shadowRoot.querySelector('slot[name="panel"]');
+    this.__panelsObserver = new FlattenedNodesObserver(panelSlot, () => {
+      this.__panels = panelSlot.assignedNodes({ flatten: true });
+    });
   }
 
-  __tabsItemsChanged(items, selected) {
-    if (!items || selected === undefined) {
+  static get observers() {
+    return [
+      '__tabItemsOrPanelsChanged(__tabItems, __panels)',
+      '__selectedTabItemChanged(selected, __tabItems, __panels)',
+      '__orientationSelectedChanged(__tabs, orientation, selected)',
+    ];
+  }
+
+  __tabItemsOrPanelsChanged(tabItems, panels) {
+    if (!tabItems || !panels) {
       return;
     }
 
-    items.forEach((tab, index) => {
-      if (tab.nextElementSibling instanceof TabSheetPanel) {
-        const panel = tab.nextElementSibling;
-        panel.hidden = index !== selected;
-        panel.role = 'tabpanel';
-        panel.id = panel.id || `${panel.localName}-${generateUniqueId()}`;
+    tabItems.forEach((tabItem) => {
+      const tabPanel = panels.find((panel) => panel.getAttribute('tab') === tabItem.id);
 
-        tab.setAttribute('aria-controls', panel.id);
+      if (tabPanel) {
+        tabPanel.role = 'tabpanel';
+        tabPanel.id = tabPanel.id || `${tabPanel.localName}-${generateUniqueId()}`;
+        tabItem.setAttribute('aria-controls', tabPanel.id);
+        tabPanel.setAttribute('aria-labelledby', tabItem.id);
       }
     });
   }
 
-  __orientationChanged(orientation) {
+  __selectedTabItemChanged(selected, tabItems, panels) {
+    if (!tabItems || !panels || selected === undefined) {
+      return;
+    }
+
+    const selectedTab = tabItems[selected];
+    const selectedTabId = selectedTab ? selectedTab.id : '';
+
+    panels.forEach((panel) => {
+      panel.hidden = panel.getAttribute('tab') !== selectedTabId;
+    });
+  }
+
+  __orientationSelectedChanged(tabs, orientation, selected) {
+    if (tabs) {
+      tabs.orientation = orientation;
+      tabs.selected = selected;
+    }
+
     if (orientation) {
       this.setAttribute('aria-orientation', orientation);
     } else {
