@@ -28,6 +28,15 @@ export class TooltipController extends SlotController {
   constructor(host) {
     // Do not provide slot factory to create tooltip lazily.
     super(host, 'tooltip');
+
+    host.addEventListener('tooltip-target-changed', (e) => {
+      const tooltipNode = this.getSlotChild();
+
+      tooltipNode.target = e.detail.target;
+      if (tooltipNode.textGenerator) {
+        tooltipNode.text = tooltipNode.textGenerator(e.detail.context);
+      }
+    });
   }
 
   /**
