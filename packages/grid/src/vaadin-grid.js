@@ -664,8 +664,11 @@ class Grid extends ElementMixin(
     cell.setAttribute('tabindex', '-1');
     cell.setAttribute('role', tagName === 'td' ? 'gridcell' : 'columnheader');
     cell.addEventListener('mouseover', (e) => {
+      this.dispatchEvent(new CustomEvent('tooltip-target-changed', { detail: { target: e.target } }));
       this.dispatchEvent(
-        new CustomEvent('tooltip-target-changed', { detail: { target: e.target, context: this.getEventContext(e) } }),
+        new CustomEvent('tooltip-request-text-generate', {
+          detail: { context: this.getEventContext(e) },
+        }),
       );
     });
 

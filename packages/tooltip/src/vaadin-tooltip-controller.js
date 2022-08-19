@@ -30,9 +30,12 @@ export class TooltipController extends SlotController {
     super(host, 'tooltip');
 
     host.addEventListener('tooltip-target-changed', (e) => {
+      this.getSlotChild().target = e.detail.target;
+    });
+
+    host.addEventListener('tooltip-request-text-generate', (e) => {
       const tooltipNode = this.getSlotChild();
 
-      tooltipNode.target = e.detail.target;
       if (tooltipNode.textGenerator) {
         tooltipNode.text = tooltipNode.textGenerator(e.detail.context);
       }
