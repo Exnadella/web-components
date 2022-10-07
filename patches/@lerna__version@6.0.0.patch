@@ -1,0 +1,13 @@
+diff --git a/index.js b/index.js
+index e4fbf24c87841d998e192ab81cd2890f0184b5e4..eb55325328eeb15b82cd7aef2c35a1219df224ac 100644
+--- a/index.js
++++ b/index.js
+@@ -101,7 +101,7 @@ class VersionCommand extends Command {
+     };
+
+     // https://docs.npmjs.com/misc/config#save-prefix
+-    this.savePrefix = this.options.exact ? "" : "^";
++    this.savePrefix = this.options.exact ? "" : "~";
+   }
+
+   initialize() {
