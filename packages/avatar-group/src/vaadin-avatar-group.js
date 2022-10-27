@@ -10,6 +10,8 @@ import './vaadin-avatar-group-overlay.js';
 import { calculateSplices } from '@polymer/polymer/lib/utils/array-splice.js';
 import { afterNextRender } from '@polymer/polymer/lib/utils/render-status.js';
 import { html, PolymerElement } from '@polymer/polymer/polymer-element.js';
+import { html as litHtml, render } from 'lit';
+import { repeat } from 'lit/directives/repeat.js';
 import { announce } from '@vaadin/component-base/src/a11y-announcer.js';
 import { ControllerMixin } from '@vaadin/component-base/src/controller-mixin.js';
 import { ElementMixin } from '@vaadin/component-base/src/element-mixin.js';
@@ -344,21 +346,6 @@ class AvatarGroup extends ResizeMixin(ElementMixin(ThemableMixin(ControllerMixin
   }
 
   /** @private */
-  __createAvatar(item) {
-    const avatar = document.createElement('vaadin-avatar');
-    avatar.name = item.name;
-    avatar.abbr = item.abbr;
-    avatar.img = item.img;
-    avatar.colorIndex = item.colorIndex;
-
-    avatar.withTooltip = true;
-    avatar.i18n = this.i18n;
-    avatar._item = item;
-
-    return avatar;
-  }
-
-  /** @private */
   __createItemElement(item) {
     const itemElement = document.createElement('vaadin-item');
     itemElement.setAttribute('theme', 'avatar-group-item');
@@ -436,36 +423,22 @@ class AvatarGroup extends ResizeMixin(ElementMixin(ThemableMixin(ControllerMixin
     const limit = this.__getLimit(items.length, itemsInView, maxItemsVisible);
 
     const newItems = limit ? items.slice(0, limit) : items;
-    const oldItems = this.__oldAvatarItems || [];
 
-    if (newItems.length || oldItems.length) {
-      const removed = oldItems.filter((item) => !newItems.includes(item));
-      const added = [...newItems];
-
-      this._avatars.forEach((avatar) => {
-        const item = avatar._item;
-        if (removed.includes(item)) {
-          avatar.remove();
-        } else if (added.includes(item)) {
-          added.splice(added.indexOf(item), 1);
-        }
-      });
-
-      this.__addAvatars(added, newItems);
-    }
+    const avatarList = repeat(
+      newItems,
+      (item) => litHtml`
+      <vaadin-avatar .name=${item.name} 
+                     .abbr=${item.abbr} 
+                     .img=${item.img} 
+                     .colorIndex=${item.colorIndex}
+                     .withTooltip=${true}
+                     .i18n=${this.i18n}>
+      </vaadin-avatar>
+    `,
+    );
+    render(litHtml`${avatarList}`, this, { renderBefore: this._overflow });
 
     this._avatars = [...this.querySelectorAll('vaadin-avatar')];
-    this.__oldAvatarItems = newItems;
-  }
-
-  /** @private */
-  __addAvatars(itemsToAdd, allItems) {
-    itemsToAdd.forEach((item) => {
-      const avatar = this.__createAvatar(item);
-      const nextItem = allItems[allItems.indexOf(item) + 1];
-      const nextAvatar = this._avatars.find((el) => el._item === nextItem);
-      this.insertBefore(avatar, nextAvatar || this._overflow);
-    });
   }
 
   /** @private */
