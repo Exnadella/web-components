@@ -11,7 +11,6 @@ import { calculateSplices } from '@polymer/polymer/lib/utils/array-splice.js';
 import { afterNextRender } from '@polymer/polymer/lib/utils/render-status.js';
 import { html, PolymerElement } from '@polymer/polymer/polymer-element.js';
 import { html as litHtml, render } from 'lit';
-import { repeat } from 'lit/directives/repeat.js';
 import { announce } from '@vaadin/component-base/src/a11y-announcer.js';
 import { ControllerMixin } from '@vaadin/component-base/src/controller-mixin.js';
 import { ElementMixin } from '@vaadin/component-base/src/element-mixin.js';
@@ -424,8 +423,7 @@ class AvatarGroup extends ResizeMixin(ElementMixin(ThemableMixin(ControllerMixin
 
     const newItems = limit ? items.slice(0, limit) : items;
 
-    const avatarList = repeat(
-      newItems,
+    const avatarList = newItems.map(
       (item) => litHtml`
       <vaadin-avatar .name=${item.name} 
                      .abbr=${item.abbr} 
